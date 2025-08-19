@@ -5,7 +5,14 @@ import bodyParser from "body-parser";
 import { sql, pool, poolConnect } from "./db.js";
 
 const app = express();
-app.use(cors());
+
+// ✅ CORS setup: Allow frontend (Vercel) URL
+app.use(cors({
+  origin: ["https://resume-vault-tau.vercel.app"], // 👈 apna frontend URL
+  methods: ["GET", "POST"],
+  credentials: true
+}));
+
 app.use(bodyParser.json());
 
 // ✅ Health check
@@ -13,7 +20,6 @@ app.get("/health", (req, res) => {
   res.json({ status: "Server is running" });
 });
 
-// ✅ Resume submission
 // ✅ Resume submission
 app.post("/submitForm", async (req, res) => {
   await poolConnect;
@@ -25,8 +31,8 @@ app.post("/submitForm", async (req, res) => {
     request.input("phone", sql.VarChar, phone);
     request.input("email", sql.VarChar, email);
     request.input("education", sql.VarChar, education);
-    request.input("skills", sql.VarChar(sql.MAX), skills); // ✅ updated
-    request.input("experience", sql.Int, experience ? parseInt(experience) : null); // ✅ safe INT
+    request.input("skills", sql.VarChar(sql.MAX), skills);
+    request.input("experience", sql.Int, experience ? parseInt(experience) : null);
 
     await request.query(`
       INSERT INTO Users (name, phone, email, education, skills, experience)
@@ -61,8 +67,8 @@ app.get("/search", async (req, res) => {
   }
 });
 
-// ✅ Start server
-const PORT = 5000;
+// ✅ Start server (Render PORT support)
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Backend running on http://localhost:${PORT}`);
+  console.log(`🚀 Backend running on port ${PORT}`);
 });
